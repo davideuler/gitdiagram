@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from app.services.github_service import GitHubService
-from app.services.o4_mini_openai_service import OpenAIo4Service
+from app.services.o3_mini_openai_service import OpenAIo3Service
 from app.prompts import (
     SYSTEM_FIRST_PROMPT,
     SYSTEM_SECOND_PROMPT,
@@ -21,11 +21,11 @@ import asyncio
 
 load_dotenv()
 
-router = APIRouter(prefix="/generate", tags=["OpenAI o4-mini"])
+router = APIRouter(prefix="/generate", tags=["OpenAI o3-mini"])
 
 # Initialize services
 # claude_service = ClaudeService()
-o4_service = OpenAIo4Service()
+o4_service = OpenAIo3Service()
 
 
 # cache github data to avoid double API calls from cost and generate
@@ -177,7 +177,7 @@ async def generate_stream(request: Request, body: ApiRequest):
                 await asyncio.sleep(0.1)
                 yield f"data: {json.dumps({'status': 'explanation', 'message': 'Analyzing repository structure...'})}\n\n"
                 explanation = ""
-                async for chunk in o4_service.call_o4_api_stream(
+                async for chunk in o4_service.call_o3_api_stream(
                     system_prompt=first_system_prompt,
                     data={
                         "file_tree": file_tree,
@@ -199,7 +199,7 @@ async def generate_stream(request: Request, body: ApiRequest):
                 await asyncio.sleep(0.1)
                 yield f"data: {json.dumps({'status': 'mapping', 'message': 'Creating component mapping...'})}\n\n"
                 full_second_response = ""
-                async for chunk in o4_service.call_o4_api_stream(
+                async for chunk in o4_service.call_o3_api_stream(
                     system_prompt=SYSTEM_SECOND_PROMPT,
                     data={"explanation": explanation, "file_tree": file_tree},
                     api_key=body.api_key,
@@ -223,7 +223,7 @@ async def generate_stream(request: Request, body: ApiRequest):
                 await asyncio.sleep(0.1)
                 yield f"data: {json.dumps({'status': 'diagram', 'message': 'Generating diagram...'})}\n\n"
                 mermaid_code = ""
-                async for chunk in o4_service.call_o4_api_stream(
+                async for chunk in o4_service.call_o3_api_stream(
                     system_prompt=third_system_prompt,
                     data={
                         "explanation": explanation,
