@@ -1,0 +1,48 @@
+services:
+  backend:
+    build: ./backend  # 假设后端 Dockerfile 在 backend 目录中
+    ports:
+      - "8002:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app # 实时代码同步，可选
+    depends_on:
+      - db
+    networks:
+      - gitdiagram-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "3003:3000"
+    env_file:
+      - .env # 如果前端也需要环境变量
+    depends_on:
+      - backend
+    networks:
+      - gitdiagram-network
+    stdin_open: true # pnpm dev 可能需要
+    tty: true        # pnpm dev 可能需要
+
+  db:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gitdiagram-network
+
+volumes:
+  postgres_data:
+
+networks:
+  gitdiagram-network:
+    driver: bridge
